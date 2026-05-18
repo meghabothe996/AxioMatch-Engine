@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 import json
 import logging
-import PyPDF2 # ADDED FOR PDF SUPPORT
+import PyPDF2 
 from rag_engine import ClinicalRetriever
 from inference_engine import AxioInferenceEngine
 
@@ -9,7 +9,7 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-print("Booting Air-Gapped AI Engines (This takes ~15 seconds)...")
+logger.info("Initializing offline inference engines...")
 retriever = ClinicalRetriever(data_path="data/mtsamples.csv")
 engine = AxioInferenceEngine(model_path="models/gemma-4-E4B-it-Q4_K_M.gguf")
 print("Engines Ready. Server starting...")
@@ -18,7 +18,6 @@ print("Engines Ready. Server starting...")
 def index():
     return render_template('index.html')
 
-# Endpoint 1: Search the CSV Database
 @app.route('/api/match', methods=['POST'])
 def run_match():
     data = request.json
@@ -43,7 +42,6 @@ def run_match():
         })
     return jsonify(results)
 
-# Endpoint 2: Process a Custom PDF
 @app.route('/api/upload', methods=['POST'])
 def upload_pdf():
     if 'file' not in request.files:
@@ -53,15 +51,12 @@ def upload_pdf():
     criteria = request.form.get('criteria', '')
     
     try:
-        # Extract text from PDF
         pdf_reader = PyPDF2.PdfReader(file)
         extracted_text = "".join([page.extract_text() for page in pdf_reader.pages])
         
-        # Run Gemma 4 directly on the PDF text
         raw_json = engine.analyze_note(extracted_text, criteria)
         analysis = json.loads(raw_json)
         
-        # Return as a single result card
         return jsonify([{
             "patient_id": "NEW PDF: " + file.filename,
             "specialty": "External Upload",

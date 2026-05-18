@@ -12,7 +12,6 @@ class AxioInferenceEngine:
         self.n_ctx = n_ctx
         self.llm = self._initialize_model()
         
-        # Define the strict JSON schema the AI MUST follow
         self.json_schema = {
             "type": "object",
             "properties": {
@@ -25,7 +24,6 @@ class AxioInferenceEngine:
             "required": ["is_match", "confidence_score", "matched_criteria", "failed_criteria", "evidence_quote"]
         }
         
-        # Compile the JSON Schema into a C++ GBNF Grammar rule
         logger.info("[SYSTEM] Compiling JSON schema into GBNF Grammar constraints...")
         self.grammar = LlamaGrammar.from_json_schema(json.dumps(self.json_schema))
 
@@ -66,7 +64,7 @@ class AxioInferenceEngine:
             prompt,
             max_tokens=600,
             temperature=0.1, 
-            grammar=self.grammar, # This applies the Strict Manager rules
+            grammar=self.grammar, 
             stop=["<end_of_turn>"]
         )
         

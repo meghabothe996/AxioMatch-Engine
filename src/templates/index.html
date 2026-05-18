@@ -30,7 +30,12 @@
                 
                 <div>
                     <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wide">1. Define Trial Criteria</h2>
-                    <textarea id="criteria" rows="5" class="w-full bg-gray-800 text-white border border-gray-600 rounded p-3 text-sm mt-2 focus:outline-none focus:border-blue-500"> </textarea>
+                    <textarea id="criteria" rows="5" class="w-full bg-gray-800 text-white border border-gray-600 rounded p-3 text-sm mt-2 focus:outline-none focus:border-blue-500">INCLUSION:
+- Diagnosis of breast cancer.
+- Mentions of surgical intervention.
+
+EXCLUSION:
+- History of chemotherapy.</textarea>
                 </div>
 
                 <div>
@@ -70,7 +75,13 @@
 
             <div class="lg:col-span-2">
                 <div class="card p-5 rounded-lg min-h-[500px]">
-                    <h2 class="text-xl font-semibold text-white mb-4">AI Execution Matrix</h2>
+                    <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-3">
+                        <h2 class="text-xl font-semibold text-white">AI Execution Matrix</h2>
+                        <button id="globalExportBtn" onclick="exportCohortCSV()" class="hidden bg-green-700 hover:bg-green-600 text-white text-xs font-bold py-2 px-4 rounded transition flex items-center shadow-lg">
+                            📥 Export Master Cohort (CSV)
+                        </button>
+                    </div>
+                    
                     <div id="resultsContainer" class="space-y-4">
                         <p class="text-gray-500 italic">Select a workflow on the left and execute to view AI analysis.</p>
                     </div>
@@ -81,7 +92,9 @@
     </div>
 
     <script>
-        // --- COLOR-MATCHING UI MODE SWITCHER LOGIC ---
+        
+        let currentCohortData = [];
+
         function switchMode(mode) {
             const tabDb = document.getElementById('tab-db');
             const tabPdf = document.getElementById('tab-pdf');
@@ -89,13 +102,11 @@
             const workflowPdf = document.getElementById('workflow-pdf');
 
             if (mode === 'db') {
-                // Apply Blue Theme
                 tabDb.className = "flex-1 px-4 py-2 text-sm font-medium border border-blue-600 bg-blue-600 text-white rounded-l-lg transition";
                 tabPdf.className = "flex-1 px-4 py-2 text-sm font-medium border-t border-b border-r border-gray-600 text-gray-400 hover:bg-gray-800 rounded-r-lg transition";
                 workflowDb.classList.replace('hidden', 'block');
                 workflowPdf.classList.replace('block', 'hidden');
             } else {
-                // Apply Purple Theme
                 tabPdf.className = "flex-1 px-4 py-2 text-sm font-medium border border-purple-600 bg-purple-600 text-white rounded-r-lg transition";
                 tabDb.className = "flex-1 px-4 py-2 text-sm font-medium border-t border-b border-l border-gray-600 text-gray-400 hover:bg-gray-800 rounded-l-lg transition";
                 workflowPdf.classList.replace('hidden', 'block');
@@ -106,6 +117,7 @@
         function setAppProcessingState(isProcessing) {
             const runBtn = document.getElementById('runBtn');
             const uploadBtn = document.getElementById('uploadBtn');
+            const globalExportBtn = document.getElementById('globalExportBtn');
             
             runBtn.disabled = isProcessing;
             uploadBtn.disabled = isProcessing;
@@ -113,6 +125,7 @@
             if(isProcessing) {
                 runBtn.classList.add("opacity-50", "cursor-not-allowed");
                 uploadBtn.classList.add("opacity-50", "cursor-not-allowed");
+                globalExportBtn.classList.add("hidden"); 
             } else {
                 runBtn.classList.remove("opacity-50", "cursor-not-allowed");
                 uploadBtn.classList.remove("opacity-50", "cursor-not-allowed");
@@ -180,13 +193,18 @@
         }
 
         function renderResults(patients) {
+            currentCohortData = patients; 
             const container = document.getElementById('resultsContainer');
+            const globalExportBtn = document.getElementById('globalExportBtn');
+            
             container.innerHTML = '';
 
             if (patients.length === 0) {
                 container.innerHTML = '<p class="text-yellow-500">No patients found.</p>';
                 return;
             }
+
+            globalExportBtn.classList.remove("hidden");
 
             patients.forEach(p => {
                 const isMatch = p.analysis.is_match;
@@ -198,9 +216,6 @@
                 const failedHtml = (p.analysis.failed_criteria || []).map(c => `<li>❌ ${c}</li>`).join('');
                 const evidence = p.analysis.evidence_quote || "No evidence extracted.";
 
-                const exportData = `AXIOMATCH SECURE REPORT\nPatient ID: ${p.patient_id}\nStatus: ${isMatch ? 'MATCH' : 'EXCLUDED'}\n\nEVIDENCE:\n"${evidence}"\n\nAI VALIDATION:\nMatched: ${p.analysis.matched_criteria || 'None'}\nFailed: ${p.analysis.failed_criteria || 'None'}`;
-                const encodedData = encodeURIComponent(exportData);
-
                 const cardHtml = `
                     <div class="bg-gray-800 border border-gray-700 p-4 rounded-md">
                         <div class="flex justify-between items-start mb-3">
@@ -211,7 +226,7 @@
                             <div>${badge}</div>
                         </div>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mt-3 mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mt-3">
                             <div>
                                 <h4 class="text-gray-400 font-semibold mb-1">AI Validation</h4>
                                 <ul class="space-y-1">${matchedHtml} ${failedHtml}</ul>
@@ -221,16 +236,49 @@
                                 <p class="italic text-gray-300">"${evidence}"</p>
                             </div>
                         </div>
-                        
-                        <div class="border-t border-gray-700 pt-3 flex justify-end">
-                            <a href="data:text/plain;charset=utf-8,${encodedData}" download="AxioMatch_Report_${p.patient_id.replace(/[^a-z0-9]/gi, '_')}.txt" class="bg-gray-700 hover:bg-gray-600 text-white text-xs font-bold py-2 px-4 rounded transition flex items-center">
-                                ⬇️ Export Secure Audit Report
-                            </a>
-                        </div>
                     </div>
                 `;
                 container.innerHTML += cardHtml;
             });
+        }
+
+        function exportCohortCSV() {
+            if (currentCohortData.length === 0) return;
+
+            let csvContent = "Patient ID,Specialty,Match Status,Vector Score,Matched Criteria,Failed Criteria,AI Extracted Evidence\n";
+
+            const escapeCSV = (text) => {
+                if (!text) return '""';
+                return '"' + String(text).replace(/"/g, '""') + '"';
+            };
+
+            currentCohortData.forEach(p => {
+                const status = p.analysis.is_match ? "MATCH" : "EXCLUDED";
+                const matched = (p.analysis.matched_criteria || []).join("; ");
+                const failed = (p.analysis.failed_criteria || []).join("; ");
+                const evidence = p.analysis.evidence_quote || "";
+
+                const row = [
+                    escapeCSV(p.patient_id),
+                    escapeCSV(p.specialty),
+                    escapeCSV(status),
+                    escapeCSV(p.score + "%"),
+                    escapeCSV(matched),
+                    escapeCSV(failed),
+                    escapeCSV(evidence)
+                ].join(",");
+
+                csvContent += row + "\n";
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "AxioMatch_Master_Cohort.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
     </script>
 </body>
