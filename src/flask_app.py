@@ -49,13 +49,21 @@ def upload_pdf():
         
     file = request.files['file']
     criteria = request.form.get('criteria', '')
-    
+
     try:
         pdf_reader = PyPDF2.PdfReader(file)
         extracted_text = "".join([page.extract_text() for page in pdf_reader.pages])
-        
+    
+        if not extracted_text.strip():
+            extracted_text = "Empty or scanned document containing no selectable text."
+
         raw_json = engine.analyze_note(extracted_text, criteria)
-        analysis = json.loads(raw_json)
+    
+        try:
+            analysis = json.loads(raw_json)
+
+        except json.JSONDecodeError:
+            analysis = {"is_match": False, "failed_criteria": ["Model JSON Error parsing PDF"]}
         
         return jsonify([{
             "patient_id": "NEW PDF: " + file.filename,
@@ -64,8 +72,11 @@ def upload_pdf():
             "score": "N/A",
             "analysis": analysis
         }])
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5000, debug=False)
+
+

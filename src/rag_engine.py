@@ -47,6 +47,11 @@ class ClinicalRetriever:
         """
         Takes the trial criteria, converts it to a vector, and finds the closest patients.
         """
+
+        if not trial_criteria or not trial_criteria.strip():
+            logger.warning("Empty trial criteria provided. Returning empty match list.")
+            return []
+
         logger.info(f"Executing Vector Search for Top {top_k} matches...")
         
         query_vector = self.vectorizer.transform([trial_criteria])
