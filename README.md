@@ -69,7 +69,7 @@ python src/flask_app.py
 
 ```
 
-*Open your browser and navigate to `http://127.0.0.1:5000*`
+*Open your browser and navigate to `http://127.0.0.1:5000`*
 
 ---
 
@@ -116,7 +116,12 @@ AxioMatch-Engine/
 └── README.md
 
 ```
+---
+
+## 📚 Acknowledgements & Citations
+* **AI Model:** [Gemma-4-E4B-it-GGUF by Unsloth](https://huggingface.co/unsloth/gemma-4-E4B-it-GGUF). We utilized the `Q4_K_M` quantization for optimal performance on local CPU/RAM constraints.
+* **Dataset:** [Medical Transcriptions (MTSamples) via Kaggle](https://www.kaggle.com/datasets/tboyle10/medicaltranscriptions). This public dataset was used to simulate a hospital's unstructured EMR database.
 
 ---
 
-*Built for the Kaggle Gemma 4 Good Hackathon.*
+*Built for the Kaggle The Gemma4Good Hackathon*
