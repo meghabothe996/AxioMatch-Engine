@@ -26,10 +26,10 @@ class ClinicalRetriever:
         
         self.tfidf_matrix = self._build_index()
 
-    def _load_corpus(self, limit: int):
+    def _load_corpus(self):
         df = self.adapter.df.dropna(subset=['transcription'])
         corpus = []
-        for idx, row in df.head(limit).iterrows():
+        for idx, row in df.iterrows():
             corpus.append({
                 "patient_id": f"MTS-{idx}",
                 "specialty": row['medical_specialty'].strip(),
