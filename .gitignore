@@ -1,0 +1,22 @@
+# venv/
+# models/*.gguf
+# data/*.csv
+# __pycache__/
+
+# Ignore local virtual environment
+venv/
+
+# Ignore Python compilation caches
+__pycache__/
+*.pyc
+
+# Ignore all files inside notebooks except your notebook files
+notebooks/.ipynb_checkpoints/
+
+# Keep models folder structure but ignore large model weights
+models/*
+!models/.gitkeep
+
+# Keep data folder structure but ignore large datasets
+data/*
+!data/.gitkeep
